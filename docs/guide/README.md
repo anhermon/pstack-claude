@@ -1,5 +1,7 @@
 # The pstack guide
 
+> **Claude Code port:** this guide is upstream's Cursor guide. Install with `/plugin marketplace add anhermon/pstack-claude` and `/plugin install pstack@pstack-claude`, run skills as `/pstack:<name>`, and read Cursor-only features (Custom Modes, cloud agents, `/add-plugin`) through [`claude-code/runtime.md`](../../claude-code/runtime.md).
+
 pstack works best when you stop micromanaging the agent. You describe what you want and how you'll know it's done. `/poteto-mode` picks the playbook, runs the other skills as the steps need them, and shows you the evidence. This guide teaches that habit with realistic prompts.
 
 Here's what you'll learn:

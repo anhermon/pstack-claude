@@ -1,10 +1,11 @@
 ---
 name: no-comments
 description: "Spawn Comment Sicko, fix accepted findings, and offer encodings for claimed constraints."
-disable-model-invocation: true
 ---
 
 # No comments
+
+> **Claude Code:** read Cursor terms in this skill through [`claude-code/runtime.md`](${CLAUDE_PLUGIN_ROOT}/claude-code/runtime.md) (tools, subagents, models, transcripts).
 
 Spawn Comment Sicko. Act on accepted findings.
 
