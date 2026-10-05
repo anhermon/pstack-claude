@@ -13,6 +13,7 @@ pstack's skills were written for Cursor. This port keeps their prose and rewrite
 | `subagent_type: "poteto-agent"` | `subagent_type: "pstack:poteto-agent"` (plugin agents are namespaced). |
 | `environment: "cloud"` | `isolation: "worktree"`: each worker gets its own temporary git worktree. Claude Code subagents always run on this machine, so a worker can read local files and transcripts. |
 | `environment: "local"` | Omit `isolation`. |
+| "cloud" and "local" spawns, roots, or work (orchestrate, autopilot) | A cloud spawn is a background subagent with `isolation: "worktree"`. It still runs on this machine, so the warnings about load on the laptop still apply: keep restacks and wide fan-outs within the concurrent-subagent limit. "Cloud work survives a restart" holds only for what was pushed. Claude Code's own cloud options (routines, web sessions) are not used by these playbooks. |
 | `cloud_base_branch` | Tell the worker in its brief to `git fetch` and check out that branch inside its worktree. |
 | `AskQuestion` | `AskUserQuestion`. |
 | todo list | `TodoWrite`, or the task tools when the session has them. |

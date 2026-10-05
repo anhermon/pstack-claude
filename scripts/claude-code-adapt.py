@@ -122,6 +122,15 @@ RULES: list[Rule] = [
     Rule("guide: loop builtin", r"`/loop` is Cursor's built-in wake mechanism", "`/loop` is Claude Code's bundled wake mechanism",
          files=("docs/**/*.md",)),
 
+    Rule("live lane cloud VM", r"Each live lane runs on its own cloud VM at the PR head\.",
+         'Each live lane runs in its own worktree (`isolation: "worktree"`) at the PR head.'),
+    Rule("cloud-agent URL", r"\ba cloud-agent URL\b", "a Claude Code session id"),
+    Rule("cloud-agent URL 2", r"cloud-agent URL,", "session id,"),
+    Rule("plugin cache path", r"~/\.cursor/plugins/", "~/.claude/plugins/"),
+
+    Rule("public copy URL", r"`https://github\.com/cursor/plugins/blob/main/pstack/`",
+         "`https://github.com/anhermon/pstack-claude/blob/main/`"),
+
     # --- MCP discovery --------------------------------------------------------
     Rule("mcp discovery",
          r"list the available MCPs from the Cursor environment\. Use the available-tools map when present\. Otherwise inspect the `mcps/` directory Cursor exposes for enabled MCP servers\.",
@@ -378,7 +387,7 @@ AUDIT_ALLOW = [
     (r">= cursor|login: \"cursor\"|endCursor|let cursor|const cursor|cursor = |cursor_automation_id|CURSOR_AUTOMATION_ID|author === \"cursor\"", "code identifiers in bundled scripts"),
     (r"@cursor-skill/", "npm package name of bundled scripts"),
     (r"Grok Bot", "Grok Bot is the operator's assistant name in examples"),
-    (r"cursor/plugins", "upstream attribution"),
+    (r"github\.com/cursor/plugins|`cursor/plugins`", "upstream attribution"),
     (r"Bugbot", "review bot whose PR comments the babysit playbook triages"),
     (r"Application Support/Cursor", "disk-cleanup hint for users who also run the Cursor app"),
     (r'verifier: "sol"', "test fixture string in bundled orch tests"),
