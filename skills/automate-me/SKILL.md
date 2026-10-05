@@ -5,6 +5,8 @@ description: "Use for \"automate me\", \"create/update/refresh my -mode skill\",
 
 # Automate me
 
+> **Claude Code:** read Cursor terms in this skill through [`claude-code/runtime.md`](${CLAUDE_PLUGIN_ROOT}/claude-code/runtime.md) (tools, subagents, models, transcripts).
+
 A guided flow for turning the user's working conventions into a skill agents will follow. The output is one `-mode` skill tailored to them (e.g. `jay-mode`, `priya-mode`).
 
 This skill orchestrates three others: an inline mining pass (see step 1), the `skill-creator` skill (see pstack's `claude-code/runtime.md`) (authoring), and the **unslop** skill (prose discipline). It sequences them. It doesn't replace them.

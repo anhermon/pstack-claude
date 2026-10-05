@@ -5,6 +5,8 @@ description: "Keep a reviewable decision trail for long-running or unattended wo
 
 # Show me your work
 
+> **Claude Code:** read Cursor terms in this skill through [`claude-code/runtime.md`](${CLAUDE_PLUGIN_ROOT}/claude-code/runtime.md) (tools, subagents, models, transcripts).
+
 Keep one canonical log.
 
 ## The format

@@ -250,7 +250,7 @@ def fix_skill_frontmatter(path: Path, text: str) -> str:
         out.append(line)
         i += 1
     body = text[m.end():]
-    if "claude-code/runtime.md" not in body and needs_pointer(body):
+    if "**Claude Code:** read Cursor terms" not in body and needs_pointer(body):
         heading = re.search(r"^# .*\n", body, re.M)
         if heading:
             body = body[: heading.end()] + "\n" + RUNTIME_POINTER + "\n" + body[heading.end():]

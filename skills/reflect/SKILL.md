@@ -5,6 +5,8 @@ description: Spawn three parallel review subagents over the active transcript, s
 
 # Reflect
 
+> **Claude Code:** read Cursor terms in this skill through [`claude-code/runtime.md`](${CLAUDE_PLUGIN_ROOT}/claude-code/runtime.md) (tools, subagents, models, transcripts).
+
 Mine the current conversation for durable learnings, then route them into skill edits.
 
 ## When to invoke
