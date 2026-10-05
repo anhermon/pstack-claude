@@ -1,0 +1,17 @@
+{
+  "name": "pstack-claude",
+  "description": "Single-plugin marketplace for the Claude Code port of poteto's pstack.",
+  "owner": {
+    "name": "Angel Hermon",
+    "url": "https://github.com/anhermon"
+  },
+  "plugins": [
+    {
+      "name": "pstack",
+      "source": "./",
+      "description": "poteto's pstack for Claude Code: poteto-mode, 23 playbooks, how/why/arena/swarm/interrogate, and engineering principles.",
+      "category": "development",
+      "homepage": "https://github.com/anhermon/pstack-claude"
+    }
+  ]
+}

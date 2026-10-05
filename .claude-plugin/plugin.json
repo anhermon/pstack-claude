@@ -1,0 +1,27 @@
+{
+  "name": "pstack",
+  "displayName": "pstack",
+  "version": "0.15.10-cc.1",
+  "description": "poteto's pstack, ported to Claude Code. if you want to go fast, go deep first. rigorous agent workflows (poteto-mode, 23 playbooks, how/why/arena/swarm/interrogate, engineering principles) you can parallelize with confidence.",
+  "author": {
+    "name": "Lauren Tan (poteto); Claude Code port by Angel Hermon",
+    "url": "https://github.com/anhermon/pstack-claude"
+  },
+  "homepage": "https://github.com/anhermon/pstack-claude",
+  "repository": "https://github.com/anhermon/pstack-claude",
+  "license": "MIT",
+  "keywords": [
+    "pstack",
+    "poteto-mode",
+    "workflow",
+    "principles",
+    "subagents",
+    "unslop",
+    "agent-skills"
+  ],
+  "icon": "./assets/logo.png",
+  "metadata": {
+    "upstream": "https://github.com/cursor/plugins/tree/main/pstack",
+    "upstreamVersion": "0.15.10"
+  }
+}
