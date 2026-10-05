@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Everything CI or a human should run before pushing. Needs `claude` (Claude Code
-# CLI) and `uv` (or a python3 that has PyYAML).
+# CLI), `bun`, and `uv` (or a python3 that has PyYAML).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -16,6 +16,10 @@ else python3 scripts/check-frontmatter.py; fi
 echo "== hooks"
 python3 -m json.tool hooks/hooks.json >/dev/null && echo "hooks.json parses"
 sh -n hooks/poteto-mode-reminder.sh && echo "poteto-mode-reminder.sh parses"
+scripts/check-hook.sh
+
+echo "== poteto-mode tools (bun test, typecheck)"
+(cd skills/poteto-mode/scripts && bun install --frozen-lockfile && bun test orch watch-pr && bun run typecheck)
 
 echo "== codemod is applied and idempotent"
 python3 scripts/claude-code-adapt.py --check
