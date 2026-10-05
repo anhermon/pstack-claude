@@ -1,0 +1,5 @@
+# Files this fork maintains by hand. scripts/claude-code-adapt.py never edits them,
+# and scripts/sync-upstream.sh keeps our side when upstream changes them
+# (it prints the upstream diff so you can port the change by hand).
+README.md
+skills/setup-pstack/SKILL.md
