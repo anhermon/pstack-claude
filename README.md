@@ -25,6 +25,8 @@ claude plugin install pstack@pstack-claude
 claude plugin details pstack     # Skills (51) = 50 skills + the mode command; Agents (3); Hooks (1)
 ```
 
+Requirements: Claude Code, and `git` with access to GitHub. `bun` is needed only for the poteto-mode helper CLIs (`watch-pr`, `orch`); on first run they install their one dependency (`commander`) from the lockfile, which needs network. `gh` is needed for the PR playbooks. Installing the plugin does not edit `~/.claude/settings.json` beyond the plugin entries Claude Code itself records.
+
 To try a local checkout for one session: `claude --plugin-dir /path/to/pstack-claude`.
 
 ## Get started

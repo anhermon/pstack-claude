@@ -233,7 +233,8 @@ def target_files(globs: tuple[str, ...], skip: set[str]) -> list[Path]:
     for g in globs:
         for p in sorted(ROOT.glob(g)):
             rel = p.relative_to(ROOT).as_posix()
-            if p.is_file() and rel not in skip and not rel.startswith("cursor-only/"):
+            if p.is_file() and rel not in skip and not rel.startswith("cursor-only/") \
+                    and "node_modules" not in p.parts:
                 seen[p] = None
     return list(seen)
 
