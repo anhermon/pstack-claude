@@ -6,7 +6,7 @@ pstack's skills were written for Cursor. This port keeps their prose and rewrite
 
 | Skill text says | In Claude Code |
 |---|---|
-| `Task` tool, `Task` call | The `Agent` tool. Pass `subagent_type`, `description`, `prompt`, and optionally `model`, `run_in_background`, `isolation`. |
+| `Task` tool, `Task` call | The `Agent` tool. Pass `subagent_type`, `description`, `prompt`, explicit `model` and `effort`, and optionally `run_in_background`, `isolation`. Every spawn, retry, resume, and nested delegate follows this contract. |
 | `subagent_type: generalPurpose` | `subagent_type: general-purpose` (built in, inherits every tool, MCP included). |
 | `readonly: true` | `subagent_type: pstack:read-only`, this plugin's agent with `Edit`, `Write`, and `NotebookEdit` removed. Bash stays, so the prompt must still say "do not modify files". |
 | `readonly: false` / agent mode | `general-purpose` or `pstack:poteto-agent`. Do not set `tools`, so MCP tools stay available. |
@@ -38,30 +38,37 @@ Read only the active project's directory unless the user names another one.
 
 ## Models
 
-`/setup-pstack` writes `~/.claude/rules/pstack-models.md`. Claude Code loads every file in `~/.claude/rules/` into every session and subagent, which is how Cursor's always-applied `~/.cursor/rules/pstack-models.mdc` worked. Each role line holds a value for the `Agent` tool's `model` parameter.
+When delegation-kit's `Delegation routing (live` prompt section appears in context, resolve model/effort per role from that live table. Do not write `~/.claude/rules/pstack-models.md`: tell the user delegation-kit owns routing and stop model configuration, while still offering `/pstack:mode on`. Otherwise `/setup-pstack` writes that user rule with an explicit model/effort pair per role. Claude Code loads user rules into every session and subagent. Existing model-only lines use the effort defaults below.
 
 | Value | Meaning |
 |---|---|
 | `opus`, `sonnet`, `haiku`, `fable` | Claude model aliases. `fable` is the largest model and may not be enabled on every account. |
 | a full model id, such as `claude-opus-5-5` | That exact model. |
-| `inherit`, `inherit-parent`, `auto` | Omit `model`, so the subagent runs on the main conversation's model. |
+| `inherit`, `inherit-parent`, `auto` | Normalize to explicit `model: sonnet`, `effort: medium`; never omit either parameter. |
 | `codex`, `gemini` | An external CLI runner. See below. |
 
 Defaults, used when the rule or a line is missing:
 
-| Role | Default | Upstream Cursor default |
-|---|---|---|
-| code roles (`feature, refactoring`, `bug-fix`, `perf-issue`, `hillclimb`), `how explorer`, `why investigators`, `swarm workers`, `reflect tooling` | `sonnet` | grok / gpt (sol) |
-| `judgment and prose`, `hardest tasks`, `how explainer`, `why synthesizer`, `reflect judgment, divergent, synthesizer` | `opus` | opus 5.5 |
-| panels: `arena runners`, `arena cross-judge pool`, `architect runners`, `interrogate reviewers` | `opus, sonnet, haiku` | opus 5.5, sol, grok |
+| Role | Default model/effort per seat |
+|---|---|
+| code roles (`feature, refactoring`, `bug-fix`, `perf-issue`, `hillclimb`, `hardest tasks`), `why investigators`, `swarm workers`, `reflect tooling` | `sonnet/medium` |
+| `how explorer`, transcript miners, low-risk helpers | `sonnet/low` |
+| `judgment and prose`, `how explainer`, `why synthesizer` | Main session synthesizes; no extra agent |
+| `reflect judgment, divergent, synthesizer` | Reviewers `sonnet/high`; one later synthesizer `opus/medium` |
+| panels: `arena runners`, `architect runners`, `interrogate reviewers` | `sonnet/medium, haiku/low, sonnet/medium` |
+| `arena cross-judge pool` (select just one after candidates finish) | `opus/medium, sonnet/medium, haiku/low` |
 
-**Model families.** Where a skill says to fall back "within the family" or to pick "a different family", the families are: Claude (`opus`, `sonnet`, `haiku`, `fable`, `claude-*`), `codex` (OpenAI), and `gemini` (Google). With only Claude aliases, a panel is three different Claude models. That is less diverse than upstream's three vendors, so agreement means less. Add `codex` or `gemini` to a panel line when those CLIs are installed.
+Parallel fan-outs of 3+ use sonnet/haiku seats, never opus. Apply this limit to configured pairs and fallback/retry seats too. The main session owns synthesis. Opus is reserved for a single non-parallel judge after the fan-out. External seats can add vendor diversity through the delegate routing below.
 
-**Effort.** Upstream encodes reasoning effort in the model slug (`-max`, `-xhigh`). Claude Code subagents inherit the session's effort level (`/effort`). The setup budget picks model tiers and records the effort to use. It does not rewrite slugs.
+**Model families.** Where a skill says to fall back "within the family" or to pick "a different family", the families are: Claude (`opus`, `sonnet`, `haiku`, `fable`, `claude-*`), `codex` (OpenAI), and `gemini` (Google). The default panel repeats sonnet; agreement carries less independent signal than upstream's three vendors. Add external seats when delegation-kit or the CLIs are available. An unsupported Claude seat falls back to explicit `sonnet/medium` and is reported.
+
+**Effort.** The `Agent` tool accepts `effort: low|medium|high|xhigh|max`. Pass an explicit effort for every seat, alongside its explicit model, including retries, resumes, and nested spawns. A role pair such as `sonnet/high` means `model: sonnet`, `effort: high`; `haiku/low` means `model: haiku`, `effort: low`. Setup maps budgets to per-role effort values. `/effort` in the main session does not replace these call parameters.
 
 ### External CLI runners (`codex`, `gemini`)
 
-A panel or role entry of `codex` or `gemini` means "run this seat on that vendor's CLI". Use it only when `command -v codex` or `command -v gemini` succeeds. Otherwise drop the seat and say so. To run the seat, spawn an `Agent` with `subagent_type: general-purpose` and `model: haiku`. For a seat that writes code, also pass `isolation: "worktree"`. Its whole job is:
+A panel or role entry of `codex` or `gemini` selects an external seat. First load `mcp__delegation-kit__delegate` via ToolSearch `select:mcp__delegation-kit__delegate`. When available, call it with `harness: "codex"` for codex seats or `harness: "agy"` for gemini seats (agy is the Gemini harness), the unchanged seat brief as `prompt`, `workdir` set to the seat's worktree, and `wait: true`. Pass optional `model`/`effort` overrides when the live table or seat configuration supplies them. Create a distinct worktree for each writing seat; reviewers use their seat's assigned worktree too. Return the delegate's result and diff as the seat output.
+
+If the delegate tool is unavailable, use the existing CLI wrapper below. Check `command -v codex` or `command -v gemini` first; if the needed CLI is absent, drop the seat and say so. Spawn the wrapper with `subagent_type: general-purpose`, explicit `model: haiku` AND `effort: low`. For a seat that writes code, also pass `isolation: "worktree"`. Its whole job is:
 
 1. Write the seat's brief to a temp file, unchanged from the brief the Claude seats get.
 2. Run the CLI non-interactively from the seat's working directory:

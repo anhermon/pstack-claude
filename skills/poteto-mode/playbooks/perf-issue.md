@@ -1,5 +1,7 @@
 ### Perf issue
 
+> **Agent parameters:** every spawn, retry, resume, and nested delegate passes explicit `model` and `effort`. Resolve delegation-kit's live role table first, otherwise pstack's role pair: code `sonnet/medium`, exploration/low-risk `sonnet/low`. Inheritance aliases pin `sonnet/medium`. Fan-outs of 3+ use sonnet/haiku, never opus. The main session synthesizes; only a single judge after the fan-out may use `opus/medium`.
+
 **You own the measurement story. Plan, review, verify the numbers.** Tie every fix to a measurement, don't read source instead of measuring.
 
 1. Capture a baseline trace via the matching control skill. Vet the baseline, and each later number, with the **benchmark-checklist** skill.
@@ -14,7 +16,7 @@
    7. Do it cheaper.
 
    When an earlier mantra meets the target, stop.
-3. Plan the fix from the trace. If it crosses a function boundary, `architect` first. Delegate implementation to a subagent using your configured perf-issue model (default `sonnet`). Review the diff. Capture a post-fix trace.
+3. Plan the fix from the trace. If it crosses a function boundary, `architect` first. Delegate implementation to a subagent using your configured perf-issue model/effort pair (default explicit `model: sonnet`, `effort: medium`, `subagent_type: pstack:poteto-agent`). Review the diff. Capture a post-fix trace.
    Apply the **sequence-verifiable-units** principle skill, verifying each attempt before trying the next.
 4. Parse and compare the artifacts (JSON to sqlite, diff). "Inconclusive" or wrong-surface is not a pass. Flag it.
 5. Cite the measurement in the PR.

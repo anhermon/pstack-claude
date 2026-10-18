@@ -1,5 +1,7 @@
 ### Babysit
 
+> **Agent parameters:** every spawn, retry, resume, and nested delegate passes explicit `model` and `effort`. Resolve delegation-kit's live role table first, otherwise pstack's role pair: code `sonnet/medium`, exploration/low-risk `sonnet/low`. Inheritance aliases pin `sonnet/medium`. Fan-outs of 3+ use sonnet/haiku, never opus. The main session synthesizes; only a single judge after the fan-out may use `opus/medium`.
+
 **You own the merge frontier. Declare a mode, clear one PR at a time, stop where the human's call begins.** This playbook replaces any other babysit skill for these requests, so do not route there even though its description matches the same words. A request to land or ship is `playbooks/shipping.md`, which begins where this playbook ends.
 
 Babysitting starts when the user asks for it, which is normally once a phase or a whole stack is built, not when a PR opens. Finish the stack, get it green here, then land it through Shipping.

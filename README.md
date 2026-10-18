@@ -31,7 +31,7 @@ To try a local checkout for one session: `claude --plugin-dir /path/to/pstack-cl
 
 ## Get started
 
-1. Run `/pstack:setup-pstack`. Pick a budget and the models for each role. It writes `~/.claude/rules/pstack-models.md`, which Claude Code loads into every session and subagent.
+1. Run `/pstack:setup-pstack`. With delegation-kit installed, pstack defers to its live routing table and does not write a competing model rule. Otherwise pick a budget and explicit model/effort pairs per role; setup writes `~/.claude/rules/pstack-models.md` for new sessions and subagents.
 2. Use `/pstack:poteto-mode <task>` for anything that needs rigor. It matches the task to one of 23 playbooks and runs the other skills as the steps need them. Bare names such as `/poteto-mode` also work when no other command uses them.
 3. Optional: `/pstack:mode on` keeps poteto-mode applying across turns in this project. This replaces Cursor's Custom Mode.
 
@@ -59,11 +59,12 @@ The adaptation is a small layer on top of upstream: a re-runnable codemod, one r
 | Area | Upstream (Cursor) | This port (Claude Code) |
 |---|---|---|
 | Manifest | `.cursor-plugin/plugin.json` | `.claude-plugin/plugin.json`, plus `.claude-plugin/marketplace.json`, which makes this repo a single-plugin marketplace. `.cursor-plugin/` is left as is. |
-| Skill frontmatter | `disable-model-invocation: true` on 52 skills; `mode`, `icon`, `color`, `reminder` on poteto-mode; display names with spaces | `disable-model-invocation` removed everywhere except `setup-pstack`. In Claude Code it hard-blocks the Skill tool, which would stop poteto-mode from routing to `how`, `why`, `interrogate`, and the principles, and would stop `poteto-agent` from preloading poteto-mode. Cursor-only keys are dropped, and `name` matches the directory (`poteto-mode`). |
-| Subagent calls | `Task` tool, `subagent_type: generalPurpose`, `readonly: true`, `environment: "cloud"` | `Agent` tool, `general-purpose`, the new `pstack:read-only` agent (Edit and Write removed), `isolation: "worktree"` |
-| Agents | `poteto-agent` (`is_background`), `Comment Sicko` | `background: true`, `skills: [pstack:poteto-mode]` preload; `comment-sicko` with `tools` and `model` set |
-| Models | `claude-opus-5-5-max`, `gpt-5.6-sol-max`, `grok-4.7-xhigh-fast`; panel opus 5.5 / sol / grok | `opus` for judgment and prose, `sonnet` for code and exploration, panels `opus, sonnet, haiku`. Panel seats can also be `codex` or `gemini`, which run those CLIs when installed. See [runtime.md](./claude-code/runtime.md#models). |
-| Model config | `/setup-pstack` writes `~/.cursor/rules/pstack-models.mdc` | It writes `~/.claude/rules/pstack-models.md`, a user-level rule loaded into every session and subagent. Budgets choose model tiers and an `/effort` level, because Claude Code has no per-call effort. |
+| Skill frontmatter | `disable-model-invocation: true` on 52 skills; `mode`, `icon`, `color`, `reminder` on poteto-mode; display names with spaces | Keep the flag only on explicit-only leaves: `setup-pstack`, `blast-radius`, `bro`, `correct`, `recall`, `teach`, `maintain-verification-skill`. It hard-blocks the Skill tool, so all routed skills, including `poteto-mode`, `poteto-help`, and `automate-me`, remain auto-invocable. Cursor-only keys are dropped; names match directories. |
+| Subagent calls | `Task` tool, `subagent_type: generalPurpose`, `readonly: true`, `environment: "cloud"` | `Agent` tool with explicit `model` AND `effort` on every spawn, retry, resume, and nested delegate; `general-purpose`, `pstack:read-only`, `isolation: "worktree"` |
+| Agents | `poteto-agent` (`is_background`), `Comment Sicko` | `poteto-agent`: `background: true`, skill preload, `sonnet/medium`; `comment-sicko`: `haiku/low`; `read-only`: `sonnet/low`. Both model and effort are pinned in frontmatter. |
+| Models | `claude-opus-5-5-max`, `gpt-5.6-sol-max`, `grok-4.7-xhigh-fast`; panel opus 5.5 / sol / grok | Code defaults to `sonnet/medium`, explorers to `sonnet/low`, panels to `sonnet/medium, haiku/low, sonnet/medium`. No opus in fan-outs of 3+; one later judge may use `opus/medium`. The main session synthesizes. External codex/gemini seats prefer delegation-kit (`codex`/`agy` harnesses), then CLI wrappers with explicit `haiku/low`. See [runtime.md](./claude-code/runtime.md#models). |
+| Model config | `/setup-pstack` writes `~/.cursor/rules/pstack-models.mdc` | With delegation-kit, use its `Delegation routing (live` table and skip writing a pstack rule; `/pstack:mode` remains available. Otherwise write `~/.claude/rules/pstack-models.md` with model/effort pairs per role. Inheritance aliases normalize to explicit `sonnet/medium`. |
+| Effort | Encoded in model slugs | `Agent` accepts explicit `effort: low\|medium\|high\|xhigh\|max`; budgets choose effort per role/seat, passed alongside model. |
 | Custom mode (option+enter) | Keeps poteto-mode in context every turn | `/pstack:mode on` and the `UserPromptSubmit` hook, or `claude --agent pstack:poteto-agent` |
 | `/loop` | Cursor built-in | Claude Code's bundled `/loop` (same name, same role) |
 | `create-skill`, built-in `babysit` | Cursor built-ins | Anthropic's `skill-creator` plugin. Babysit is the playbook only. |
@@ -74,7 +75,7 @@ The adaptation is a small layer on top of upstream: a re-runnable codemod, one r
 ### Skills, agents, and automations
 
 - **Ported with mechanical edits (49 skills):** every skill under `skills/` except the two below. The codemod changes tool names, model aliases, config and transcript paths, and frontmatter. The prose is otherwise upstream's.
-- **Rewritten (1 skill):** `setup-pstack`. It detects Claude aliases and the `codex` and `gemini` CLIs, maps the budget to model tiers, writes the Claude Code rule, and offers `/pstack:mode`.
+- **Rewritten (1 skill):** `setup-pstack`. It defers to delegation-kit's live routing when present; otherwise it detects models and external runners, maps the budget to model/effort pairs, writes the Claude Code rule, and offers `/pstack:mode`.
 - **Edited in place:** `poteto-help`, where the paragraphs on Cursor, Custom Modes, and cloud agents are replaced through codemod rules. `docs/guide/` gets a banner plus path and model renames. The guide is otherwise Cursor prose.
 - **Dropped (Cursor-only, kept in [`cursor-only/`](./cursor-only/README.md)):** `make-bot-ui`. It drives Cursor Automations webhooks and a Cursor-hosted bot.
 - **Not ported:** the [benny automation pack](./automations/benny/) (Slack-triggered Cursor Automations). It was never loaded as plugin skills, and it is left unchanged. [automations/CLAUDE-CODE.md](./automations/CLAUDE-CODE.md) sketches a headless `claude -p` port.
@@ -83,8 +84,8 @@ The adaptation is a small layer on top of upstream: a re-runnable codemod, one r
 
 ### Caveats
 
-- With only Claude models, a "multi-model" panel is three Claude models. That gives less independent signal than upstream's three vendors. Add `codex` or `gemini` seats if you have those CLIs.
-- Removing `disable-model-invocation` puts every pstack skill description in context (`claude plugin details pstack` estimates about 3.3k tokens always-on), and Claude may load a skill on its own when the description matches.
+- The default panel repeats sonnet alongside haiku, giving less independent signal than upstream's three vendors. Add `codex` or `gemini` seats through delegation-kit or installed CLIs.
+- Seven explicit-only leaf skills keep `disable-model-invocation` to avoid loading their descriptions on every turn. Routed skills keep their descriptions available so the Skill tool and poteto-mode routing work; Claude may load them when their descriptions match. The adapter and frontmatter check enforce the same seven-skill allowlist.
 - The agent preload `skills: [pstack:poteto-mode]` uses the plugin-scoped skill name. If your Claude Code version expects another form, the agent still reads the file through its `${CLAUDE_PLUGIN_ROOT}` path.
 - `orchestrate`, `autopilot-*`, and `swarm` were designed around Cursor cloud agents. Here they run as local background subagents in git worktrees, capped by Claude Code's concurrent-subagent limit (20 by default), and they stop when the session ends.
 

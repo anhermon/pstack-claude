@@ -1,5 +1,7 @@
 ### Session pickup
 
+> **Agent parameters:** every spawn, retry, resume, and nested delegate passes explicit `model` and `effort`. Resolve delegation-kit's live role table first, otherwise pstack's role pair: code `sonnet/medium`, exploration/low-risk `sonnet/low`. Inheritance aliases pin `sonnet/medium`. Fan-outs of 3+ use sonnet/haiku, never opus. The main session synthesizes; only a single judge after the fan-out may use `opus/medium`.
+
 **You own the resume point. Read the prior trail, don't redo it.**
 
 1. Locate the prior trail. A local transcript under the active workspace's transcript directory (`~/.claude/projects/<project>/`) (see pstack's `claude-code/runtime.md`. Do not glob across `~/.claude/projects/*/`, that crosses workspace boundaries and reads private chats from unrelated projects), a Claude Code session id, or a pushed branch. Read the metadata overview and last messages first, then scan back for the decision points. Parse a long transcript in a subagent and keep the reduced timeline in the main thread (the **principle-guard-the-context-window** skill).

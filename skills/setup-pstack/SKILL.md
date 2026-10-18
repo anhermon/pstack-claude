@@ -6,17 +6,21 @@ disable-model-invocation: true
 
 # Setup pstack
 
-Write `~/.claude/rules/pstack-models.md`, a user-level Claude Code rule that sets pstack's model per role. Claude Code loads every file in `~/.claude/rules/` into every session and every subagent, so the rule works like upstream's always-applied Cursor rule. Read [`claude-code/runtime.md`](${CLAUDE_PLUGIN_ROOT}/claude-code/runtime.md) for what each value means.
+Configure explicit model/effort pairs per role. Without delegation-kit, write `~/.claude/rules/pstack-models.md`, a user-level rule loaded into every session and subagent. Read [`claude-code/runtime.md`](${CLAUDE_PLUGIN_ROOT}/claude-code/runtime.md) for what each value means.
 
 > Hand-maintained Claude Code port of upstream `setup-pstack`. The upstream version writes `~/.cursor/rules/pstack-models.mdc` with Cursor model slugs.
 
 ## Steps
 
+### 0. Respect delegation-kit routing
+
+If the prompt section `Delegation routing (live` appears in context, delegation-kit is installed and owns model/effort routing. Defer to that live table per role. Do NOT write `~/.claude/rules/pstack-models.md`. Tell the user that delegation-kit's live routing will be used, still offer `/pstack:mode on` (step 6), and stop model configuration here. Otherwise continue below.
+
 ### 1. Detect available models
 
 - Claude models: the aliases `opus`, `sonnet`, and `haiku` always resolve. `fable` resolves only when the account has Fable enabled. Ask the user if unsure, or check `/model`. Full model IDs such as `claude-opus-5-5` are valid when the user names them. The `availableModels` allowlist in the user's settings, if set, limits what works, so read `~/.claude/settings.json` and drop anything it excludes.
-- External CLIs: run `command -v codex` and `command -v gemini`. Offer `codex` or `gemini` as panel seats only when the CLI is present.
-- The aliases `inherit`, `inherit-parent`, and `auto` are always valid. All three mean: omit `model`, so the subagent runs on the main conversation's model.
+- External runners: load ToolSearch `select:mcp__delegation-kit__delegate` when available; codex uses harness `codex`, gemini uses harness `agy`. Otherwise run `command -v codex` and `command -v gemini` and offer only installed CLI seats. Follow the runtime's worktree and `wait: true` contract; fallback wrapper agents pass explicit `model: haiku`, `effort: low`.
+- Normalize the legacy aliases `inherit`, `inherit-parent`, and `auto` to explicit `model: sonnet`, `effort: medium`. Never omit either parameter.
 
 Never write a value you have not confirmed is available.
 
@@ -33,25 +37,24 @@ The default role-to-model mapping is the rule shape shown in step 5 below. If `~
 - `medium — high effort`
 - `small — medium effort`
 
-**(b) Apply it.** Claude Code subagents inherit the session's effort level, and the `Agent` tool has no per-call effort setting. So the budget does two things:
+**(b) Apply it.** The `Agent` tool accepts explicit `model` and `effort` (`low|medium|high|xhigh|max`). Record both for every seat. Pass them on every spawn, retry, resume, and nested delegation.
 
-1. It records the target effort on the `budget:` line. Tell the user to set it with `/effort <level>`, which saves it as their default for the current model.
-2. It picks model tiers. Keep any role the user changed on a previous run.
+The budget maps to per-role effort below. Keep prior role choices that satisfy the fan-out policy. Explorers and low-risk helpers stay `sonnet/low`; haiku seats stay `haiku/low`. The main session handles explanation and final synthesis. Only a single non-parallel judge after the fan-out may use opus, always with explicit effort. Fan-outs of 3+ use sonnet/haiku seats, never opus, including configured and retry seats.
 
-| Budget | judgment roles | code roles | panels |
+| Budget | single judge | code roles | panels (model/effort per seat) |
 |---|---|---|---|
-| `unlimited` | `opus` (`fable` for `hardest tasks` if available) | `sonnet` | `opus, sonnet, haiku`, plus each detected CLI |
-| `large` | `opus` | `sonnet` | `opus, sonnet, haiku` |
-| `medium` | `opus` | `sonnet` | `opus, sonnet` |
-| `small` | `sonnet` | `haiku` | `sonnet, haiku` |
+| `unlimited` | `opus/max` | `sonnet/max` | `sonnet/max, haiku/low, sonnet/max`, plus detected external seats |
+| `large` | `opus/xhigh` | `sonnet/xhigh` | `sonnet/xhigh, haiku/low, sonnet/xhigh` |
+| `medium` | `opus/high` | `sonnet/high` | `sonnet/high, haiku/low, sonnet/high` |
+| `small` | `sonnet/medium` | `sonnet/medium` | `sonnet/medium, haiku/low, sonnet/medium` |
 
-Judgment roles are `judgment and prose`, `hardest tasks`, `how explainer`, `why synthesizer`, and `reflect judgment, divergent, synthesizer`. Code roles are the four code playbook lines, `how explorer`, `why investigators`, `reflect tooling`, and `swarm workers`. Panels are `arena runners`, `arena cross-judge pool`, `architect runners`, and `interrogate reviewers`.
+Code roles are the four code playbook lines, `hardest tasks`, `why investigators`, `reflect tooling`, and `swarm workers`. `how explorer` uses `sonnet/low`. `judgment and prose`, `how explainer`, and `why synthesizer` run in the main session. The shared `reflect judgment, divergent, synthesizer` line uses sonnet for parallel reviewers (default effort `high`) and the single-judge pair only for the later synthesizer. Panels are `arena runners`, `architect runners`, and `interrogate reviewers`. `arena cross-judge pool` lists choices for just one later judge, never a fan-out.
 
-**(c) Show the roles and confirm.** Show every role with its value, and mark any value not in the detected set as needing a choice. Also list each line step 2 dropped. Ask whether to accept as-is or change specific roles. Offer the detected aliases and CLIs plus `inherit` as options. Prefer `AskUserQuestion` over free text. For panel roles the value is a list, and one subagent runs per entry, `inherit` entries included, so the list length sets the count. `arena cross-judge pool` is also a list, but Arena picks one value from it, from a different model family than the parent's when possible. `codex` and `gemini` count as their own families. `swarm workers` is the default model for every worker unless a race or comparison assigns another model per arm.
+**(c) Show the roles and confirm.** Show every role with its model/effort pair (or `main session`), marking unavailable models as needing a choice. List retired lines dropped in step 2. Ask whether to accept or change specific roles, offering detected models and external seats. Prefer `AskUserQuestion`. Each panel entry adds one seat; `arena cross-judge pool` instead selects one later judge, preferably from a different family. `codex` and `gemini` are separate families. `swarm workers` sets each worker's pair unless a race assigns explicit pairs per arm.
 
 ### 4. Validate
 
-Every value written must be in the detected set or be an `inherit` alias. If a chosen value is not available, stop and ask again.
+Every agent seat must have an available model and a valid explicit effort. Normalize legacy inheritance aliases to `sonnet/medium`. Validate the fan-out limits above. If a chosen model is unavailable, stop and ask again.
 
 ### 5. Write the rule
 
@@ -60,27 +63,27 @@ Create `~/.claude/rules/` if needed. Write `~/.claude/rules/pstack-models.md` wi
 ```
 # pstack model configuration (Claude Code)
 
-Per-role models for pstack skills. Each value is the `model` parameter for the `Agent` tool. Delete a line to fall back to the skill default.
-`inherit`, `inherit-parent`, or `auto`: omit `model`, so the role runs on the main conversation's model. `codex` or `gemini`: an external CLI seat (see pstack's claude-code/runtime.md). Each panel entry, aliases included, adds one subagent.
+Per-role model/effort pairs for pstack skills. Pass both explicit parameters to `Agent`. Delete a line to use the runtime default.
+Normalize `inherit`, `inherit-parent`, or `auto` to explicit `sonnet/medium`. `codex` or `gemini` uses the runtime's delegate routing (harness codex or agy), falling back to a CLI wrapper with explicit haiku/low. Every panel entry adds one seat. No opus in fan-outs of 3+; opus is only for one later judge. Main session roles never spawn another agent.
 
 budget: large (xhigh effort)
-feature, refactoring: sonnet
-bug-fix: sonnet
-perf-issue: sonnet
-hillclimb: sonnet
-judgment and prose: opus
-hardest tasks: opus
-how explorer: sonnet
-how explainer: opus
-why investigators: sonnet
-why synthesizer: opus
-reflect tooling: sonnet
-reflect judgment, divergent, synthesizer: opus
-arena runners: opus, sonnet, haiku
-arena cross-judge pool: opus, sonnet, haiku
-swarm workers: sonnet
-architect runners: opus, sonnet, haiku
-interrogate reviewers: opus, sonnet, haiku
+feature, refactoring: sonnet/xhigh
+bug-fix: sonnet/xhigh
+perf-issue: sonnet/xhigh
+hillclimb: sonnet/xhigh
+judgment and prose: main session
+hardest tasks: sonnet/xhigh
+how explorer: sonnet/low
+how explainer: main session
+why investigators: sonnet/xhigh
+why synthesizer: main session
+reflect tooling: sonnet/xhigh
+reflect judgment, divergent, synthesizer: reviewers sonnet/high; single synthesizer opus/xhigh
+arena runners: sonnet/xhigh, haiku/low, sonnet/xhigh
+arena cross-judge pool: opus/xhigh, sonnet/xhigh, haiku/low
+swarm workers: sonnet/xhigh
+architect runners: sonnet/xhigh, haiku/low, sonnet/xhigh
+interrogate reviewers: sonnet/xhigh, haiku/low, sonnet/xhigh
 ```
 
 Write the rule body as plain Markdown, with no code fence around it.

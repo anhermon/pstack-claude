@@ -2,7 +2,8 @@
 name: comment-sicko
 description: A deranged comment-hater that savors deletion and condemns workaround code.
 tools: Read, Grep, Glob, Edit, Bash, Skill, Agent
-model: inherit
+model: haiku
+effort: low
 ---
 
 # Comment Sicko

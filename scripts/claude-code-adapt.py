@@ -193,27 +193,171 @@ RULES: list[Rule] = [
     # --- Plugin-relative links into Cursor-only skills ------------------------
     Rule("README make-bot-ui link", r"\(\./skills/make-bot-ui/SKILL\.md\)", "(./cursor-only/make-bot-ui/SKILL.md)",
          files=("docs/**/*.md",)),
+
+    # --- delegation-kit compatibility ---------------------------------------
+    # These run AFTER the Cursor/tool/model renames above, on both fresh
+    # upstream content and an already adapted checkout. Each replacement
+    # consumes its old wording so a second pass has no pending rewrites.
+    Rule("explicit spawn routing",
+         r"(?:Each spawn below names|Each reviewer and the synthesizer name) a role line in the `pstack-models\.md` rule and a default\.[^\n]+",
+         "Resolve each seat's explicit `model` and `effort` from delegation-kit's live routing table when its `Delegation routing (live` section is in context; otherwise use `pstack-models.md` and the defaults below. Map `auto`, `inherit-parent`, and `inherit` to `model: sonnet`, `effort: medium`. Always pass both parameters to `Agent`, including retries and resumes. For fan-outs of 3+ use sonnet/haiku seats, never opus. The main session owns final synthesis; any separately prescribed synthesizer runs alone after the fan-out."),
+    Rule("swarm worker pins",
+         r"4\. Pick the worker model[^\n]+",
+         "4. Resolve the `swarm workers` model/effort pair from the live delegation-kit table when present, otherwise from `~/.claude/rules/pstack-models.md`; default `model: sonnet`, `effort: medium`. Map `auto`, `inherit-parent`, and `inherit` to that explicit pair. Fan-outs of 3+ use sonnet/haiku seats, never opus. Pass both fields on every call and retry. Name each race arm's pair up front.",
+         files=("skills/swarm/SKILL.md",)),
+    Rule("swarm spawn fields",
+         r"and the step 4 model, left unset for `auto` or `inherit-parent`",
+         "and explicit `model` plus `effort` from step 4"),
+    Rule("reflect reviewer effort",
+         r"with `model` set as below,",
+         "with explicit `model` and `effort` set as below,"),
+    Rule("reflect table effort header",
+         r"\| Default `model` \| Prompt template \|",
+         "| Default `model` / `effort` | Prompt template |"),
+    Rule("reflect judgment seats",
+         r"(\| (?:Judgment|Divergent) \| `reflect judgment, divergent, synthesizer` \| )`opus`",
+         r"\1`sonnet` / `high`"),
+    Rule("reflect tooling effort",
+         r"(\| Tooling \| `reflect tooling` \| )`sonnet`( \|)",
+         r"\1`sonnet` / `medium`\2"),
+    Rule("reflect single synthesizer",
+         r"with `model` from the `reflect judgment, divergent, synthesizer` line \(default `opus`\)",
+         "with explicit `model` and `effort` from the `reflect judgment, divergent, synthesizer` line (single-seat default `opus` / `medium`, after all reviewers finish)"),
+    Rule("arena runner pins",
+         r"3\. Pick the runners\.[^\n]+",
+         "3. Resolve the `arena runners` seats from delegation-kit's live table when present, otherwise `~/.claude/rules/pstack-models.md`. Default to `sonnet/medium`, `haiku/low`, `sonnet/medium`. Pass each pair as explicit `model` and `effort` parameters. Map `auto`, `inherit-parent`, and `inherit` to `sonnet/medium`; unsupported entries fall back to `sonnet/medium` and are reported. Fan-outs of 3+ use sonnet/haiku, never opus. External `codex`/`gemini` seats use the delegate routing in `claude-code/runtime.md`. Spawn more when the arena covers multiple design directions; repeated models are valid.",
+         files=("skills/arena/SKILL.md",)),
+    Rule("arena fanout fields",
+         r"Spawn all N subagents in one message with `run_in_background: true`,",
+         "Spawn all N subagents in one message with `subagent_type: general-purpose`, explicit `model` and `effort` from Phase A, `run_in_background: true`,"),
+    Rule("arena single judge pins",
+         r"Spawn one readonly judge subagent on that model\.",
+         "Spawn one judge with `subagent_type: pstack:read-only`, explicit `model` set to that choice and explicit `effort: medium` (or the configured effort). Normalize inheritance aliases to `sonnet/medium`. The default single judge is `opus/medium`; external seats follow the runtime delegate routing."),
+    Rule("architect runner pins",
+         r"If the rule or that line is missing, use `opus`, `haiku`, `sonnet`\.",
+         "If the rule or that line is missing, use `sonnet/medium`, `haiku/low`, `sonnet/medium`, passing explicit `model` and `effort` for each seat. Delegation-kit's live routing table takes precedence. Fan-outs of 3+ never use opus."),
+    Rule("interrogate table effort",
+         r"\| Default model \|", "| Default model / effort |",
+         files=("skills/interrogate/SKILL.md",)),
+    Rule("interrogate seats",
+         r"\| Reviewer ([ABC]) \| `(opus|haiku|sonnet)` \|",
+         # A and C have the same default; B stays the inexpensive seat.
+         r"| Reviewer \1 | `\2` / `medium` |"),
+    Rule("interrogate opus seat",
+         r"\| Reviewer A \| `opus` / `medium` \|",
+         "| Reviewer A | `sonnet` / `medium` |"),
+    Rule("interrogate haiku effort",
+         r"\| Reviewer B \| `haiku` / `medium` \|",
+         "| Reviewer B | `haiku` / `low` |"),
+    Rule("interrogate reviewer fields",
+         r"- `model`: the configured `interrogate reviewers` entry[^\n]+",
+         "- `model` and `effort`: resolve each `interrogate reviewers` pair from the live delegation-kit table when present, otherwise the rule or table defaults. Pass both explicitly. Normalize `auto`, `inherit-parent`, and `inherit` to `sonnet/medium`. Fan-outs of 3+ use sonnet/haiku, never opus."),
+    Rule("explorer effort",
+         r"(- `model`: the `how explorer` line, default `sonnet`)\n(?!- `effort`:)",
+         r"\1\n- `effort`: explicitly pass the configured effort, default `low`\n"),
+    Rule("investigator effort",
+         r"(- `model`: the `why investigators` line, default `sonnet`)\n(?!- `effort`:)",
+         r"\1\n- `effort`: explicitly pass the configured effort, default `medium`\n"),
+    Rule("how simple main session",
+         r"no explorers\. One explainer explores and explains in a single pass\.",
+         "no explorers. The main session explores and explains in a single pass."),
+    Rule("how complex main session",
+         r"spawn parallel explorers first, then hand off to the explainer\.",
+         "spawn parallel explorers first, then synthesize in the main session."),
+    Rule("how direct explanation",
+         r"Spawn one `Agent` subagent that explores and explains in one pass:\n\n- `subagent_type`: `pstack:read-only`\n- `model`: the `how explainer` line, default `opus`\n- read-only:[^\n]+\n\nBuild its prompt from",
+         "The main session explores and explains directly; do not spawn an explainer. Follow"),
+    Rule("how main synthesis",
+         r"Once all explorers have returned, spawn one `Agent` subagent to synthesize their findings into one explanation:\n\n- `subagent_type`: `pstack:read-only`\n- `model`: the `how explainer` line, default `opus`\n- read-only:[^\n]+\n\nBuild its prompt from",
+         "Once all explorers have returned, the main session synthesizes their findings. Follow"),
+    Rule("how present main answer", r"Present the explainer's output to the user\.",
+         "Present the main session's explanation to the user."),
+    Rule("why main synthesis",
+         r"Spawn one synthesizer subagent:\n\n- `subagent_type`: `general-purpose`\n- `model`: the `why synthesizer` line, default `opus`\n- tools:[^\n]+\n\nThe synthesizer gets:",
+         "The main session synthesizes after all investigators finish; do not spawn another synthesizer. Spot-verify citations using the available tools. Use:"),
+    Rule("no-comments agent",
+         r'Spawn `Task` with `subagent_type: "Comment Sicko"`\.',
+         'Spawn `Agent` with `subagent_type: "pstack:comment-sicko"`, explicit `model: haiku`, and `effort: low`.'),
+    Rule("trail reviewer pins",
+         r"Before handing back, spawn a subagent on a different model family from the one that did the work\.",
+         "Before handing back, run one reviewer on a different model family when available: external codex/gemini seats follow the delegate routing in `claude-code/runtime.md`; otherwise spawn `Agent` with `subagent_type: pstack:read-only`, explicit `model: sonnet` and `effort: medium`. Resolve overrides from the live delegation-kit table when present, normalizing inheritance aliases to `sonnet/medium`."),
+    Rule("recall cheap fanout pins",
+         r"Spawn parallel subagents on a fast, cheap model,",
+         "Spawn parallel `Agent` subagents with `subagent_type: pstack:read-only`, explicit `model: sonnet` and `effort: low` (or explicit sonnet/haiku pairs from the live delegation-kit table),"),
+    Rule("poteto explicit subagent type",
+         r'Use `subagent_type: "pstack:poteto-agent"` for any subagent',
+         'Use `subagent_type: "pstack:poteto-agent"`, explicit `model: sonnet` and `effort: medium` (exploration/low-risk: `sonnet/low`, or the resolved role pair below) for any subagent'),
+    Rule("poteto spawn defaults",
+         r"\*\*Defaults for every `Agent` call\.\*\*[^\n]+",
+         "**Required fields for every `Agent` call.** Pass explicit `model` AND `effort`, including retries, resumes, and nested delegates; effort is one of `low|medium|high|xhigh|max`. Default code roles and workers to `sonnet/medium`, exploration and low-risk helpers to `sonnet/low`. Fan-outs of 3+ use sonnet/haiku seats, never opus. The main session owns synthesis and judgment; opus is reserved for a single non-parallel judge with explicit effort (default `opus/medium`). Use `run_in_background: true`, full tool access (MCP included), and file pointers rather than inlined context. Resolve code roles from `feature, refactoring`, `bug-fix`, `perf-issue`, or `hillclimb`; other roles use their named lines. Map `auto`, `inherit-parent`, and `inherit` to explicit `sonnet/medium`.\n\n**Delegation-kit precedence.** If `Delegation routing (live` appears in context, defer to that live table for model/effort per role instead of writing a competing configuration. Do NOT write `~/.claude/rules/pstack-models.md`; tell the user delegation-kit owns routing and stop model configuration, while still offering `/pstack:mode on`. Without delegation-kit, `/setup-pstack` writes explicit model/effort pairs. Routed skills must also resolve the live table first."),
+    Rule("playbook exploration effort",
+         r"and an explicit model per the Subagents section",
+         "and explicit `model: sonnet`, `effort: low` per the Subagents section"),
+    Rule("playbook code role effort",
+         r"using your configured (bug-fix|feature|refactoring|perf-issue|hillclimb) model \(default `sonnet`\)",
+         r"using your configured \1 model/effort pair (default explicit `model: sonnet`, `effort: medium`, `subagent_type: pstack:poteto-agent`)"),
+    Rule("multi-phase lane effort",
+         r"on the `swarm workers` model \(default `sonnet`\)",
+         "with explicit `model` and `effort` from `swarm workers` (default `sonnet/medium`)"),
+    Rule("multi-phase verification effort",
+         r"Ten lanes on `<swarm workers model>`",
+         "Ten lanes with explicit `model` and `effort` from `<swarm workers model/effort>` (default `sonnet/medium`)"),
+    Rule("cleanup fanout effort",
+         r"fan subagents out to read the transcripts",
+         "fan `Agent` subagents out with `subagent_type: pstack:read-only`, explicit `model: sonnet`, `effort: low` to read the transcripts"),
+    Rule("opening PR agent pins",
+         r"Multiple `Agent` calls on the same branch",
+         "Multiple `Agent` calls (each with `subagent_type: pstack:poteto-agent`, explicit `model: sonnet`, `effort: medium`, or resolved role pair) on the same branch"),
+    Rule("eval candidate pins",
+         r"\*\*Spawn N parallel candidates\*\* on different models",
+         "**Spawn N parallel candidates** with explicit `model` and `effort` per seat (default `sonnet/medium`, `haiku/low`, `sonnet/medium`; no opus in fan-outs of 3+)"),
+    Rule("eval judge pins",
+         r"\*\*Spawn one blinded judge\*\* on a different model family",
+         "**Spawn one blinded judge** after all candidates finish, with explicit `model` and `effort` (default single seat `opus/medium`), preferring a different model family"),
+    Rule("orchestrate spawn pins",
+         r"Every spawn and every resume carries the standing orders verbatim\.",
+         "Every spawn and resume passes explicit `model` and `effort` and carries the standing orders verbatim. Resolve each role from delegation-kit's live table when present, otherwise the pstack rule; default workers/sub-coordinators to `sonnet/medium`, low-risk verifiers/explorers to `sonnet/low`. Map inheritance aliases to `sonnet/medium`. Fan-outs of 3+ use sonnet/haiku, never opus. The main session synthesizes; a separate single judge may use `opus/medium` only after the wave finishes."),
+    Rule("help leaf invocation policy",
+         r"In Claude Code every pstack skill except `/setup-pstack` can load from the user's words,[^\n]+",
+         "Routed pstack skills can load from the user's words or the Skill tool. The explicit-only leaf skills are `setup-pstack`, `blast-radius`, `bro`, `correct`, `recall`, `teach`, and `maintain-verification-skill`. Type those directly. `/poteto-mode`, `/poteto-help`, and `/automate-me` remain auto-invocable."),
+    Rule("playbook agent contract",
+         r"\A(#{1,6} [^\n]+\n)(?!\n> \*\*Agent parameters:)",
+         r"\1\n> **Agent parameters:** every spawn, retry, resume, and nested delegate passes explicit `model` and `effort`. Resolve delegation-kit's live role table first, otherwise pstack's role pair: code `sonnet/medium`, exploration/low-risk `sonnet/low`. Inheritance aliases pin `sonnet/medium`. Fan-outs of 3+ use sonnet/haiku, never opus. The main session synthesizes; only a single judge after the fan-out may use `opus/medium`.\n",
+         files=("skills/poteto-mode/playbooks/*.md",)),
+    Rule("help direct poteto spawn pins",
+         r'spawn it with `subagent_type: "pstack:poteto-agent"`\.',
+         'spawn it with `subagent_type: "pstack:poteto-agent"`, explicit `model: sonnet` and `effort: medium` (or the resolved live role pair).'),
+    Rule("help isolation spawn pins",
+         r'or spawn them with `isolation: "worktree"`\.',
+         'or spawn them with `isolation: "worktree"`, explicit `model: sonnet` and `effort: medium` (or resolved role pairs; sonnet/haiku for fan-outs of 3+).'),
+    Rule("source playbook investigator pins",
+         r"The why skill spawns one investigator per available evidence category,",
+         "The why skill spawns one investigator per available evidence category with explicit `model: sonnet` and `effort: medium` (or the resolved live role pair),"),
 ]
 
-# Frontmatter keys that only Cursor reads. `disable-model-invocation` is dropped
-# because in Claude Code it blocks the Skill tool outright, which breaks
-# poteto-mode's routing into how/why/interrogate/principle-* and stops
-# poteto-agent from preloading poteto-mode.
+# Drop Cursor-only keys. Keep disable-model-invocation only on explicit-only
+# leaves; it blocks the Skill tool, so routed skills and poteto-mode must omit it.
 DROP_SKILL_KEYS = {"mode", "icon", "color", "reminder"}
-KEEP_DISABLE_MODEL_INVOCATION = {"setup-pstack"}
+KEEP_DISABLE_MODEL_INVOCATION = {
+    "setup-pstack", "blast-radius", "bro", "correct", "recall", "teach",
+    "maintain-verification-skill",
+}
 
 AGENT_FRONTMATTER = {
     "agents/poteto-agent.md": {
         "rename": {"is_background": "background"},
-        "add": [("skills", "\n  - pstack:poteto-mode")],
+        "set": {"model": "sonnet", "effort": "medium"},
+        "add": [("skills", "\n  - pstack:poteto-mode"), ("model", " sonnet"), ("effort", " medium")],
     },
     "agents/comment-sicko.md": {
-        "set": {"name": "comment-sicko"},
-        "add": [("tools", " Read, Grep, Glob, Edit, Bash, Skill, Agent"), ("model", " inherit")],
+        "set": {"name": "comment-sicko", "model": "haiku", "effort": "low"},
+        "add": [("tools", " Read, Grep, Glob, Edit, Bash, Skill, Agent"), ("model", " haiku"), ("effort", " low")],
     },
 }
 AGENT_BODY = {
     "agents/poteto-agent.md": [
+        ("Spawn a fresh `poteto-agent` for each new task",
+         "Spawn a fresh `poteto-agent` with explicit `model=sonnet` and `effort=medium` for each new task"),
         ("Read the `poteto-mode` skill's `SKILL.md` in full before doing any work",
          "Read the `poteto-mode` skill's `SKILL.md` (`${CLAUDE_PLUGIN_ROOT}/skills/poteto-mode/SKILL.md`, preloaded when available) in full before doing any work"),
     ],
@@ -257,8 +401,12 @@ def fix_skill_frontmatter(path: Path, text: str) -> str:
             continue
         if key == "name" and line.split(":", 1)[1].strip() != skill:
             line = f"name: {skill}"
+        if key == "disable-model-invocation" and skill in KEEP_DISABLE_MODEL_INVOCATION:
+            line = "disable-model-invocation: true"
         out.append(line)
         i += 1
+    if skill in KEEP_DISABLE_MODEL_INVOCATION and not any(l.startswith("disable-model-invocation:") for l in out):
+        out.append("disable-model-invocation: true")
     body = text[m.end():]
     if "**Claude Code:** read Cursor terms" not in body and needs_pointer(body):
         heading = re.search(r"^# .*\n", body, re.M)

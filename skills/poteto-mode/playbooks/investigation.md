@@ -1,5 +1,7 @@
 ### Investigation
 
+> **Agent parameters:** every spawn, retry, resume, and nested delegate passes explicit `model` and `effort`. Resolve delegation-kit's live role table first, otherwise pstack's role pair: code `sonnet/medium`, exploration/low-risk `sonnet/low`. Inheritance aliases pin `sonnet/medium`. Fan-outs of 3+ use sonnet/haiku, never opus. The main session synthesizes; only a single judge after the fan-out may use `opus/medium`.
+
 **You own the answer. Plan, route, write.**
 
 Investigation requests are read-only. They produce a cited explanation or a recommendation, not a code change.
