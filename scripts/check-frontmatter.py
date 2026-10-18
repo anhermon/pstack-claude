@@ -14,6 +14,10 @@ FM = re.compile(r"\A---\n(.*?)\n---\n", re.S)
 SKILL_KEYS = {"name", "description", "disable-model-invocation", "paths", "argument-hint", "allowed-tools", "model", "user-invocable"}
 AGENT_KEYS = {"name", "description", "tools", "disallowedTools", "model", "background", "skills", "effort", "isolation", "color", "maxTurns", "memory"}
 COMMAND_KEYS = {"description", "argument-hint", "disable-model-invocation", "allowed-tools", "model"}
+KEEP_DISABLE_MODEL_INVOCATION = {
+    "setup-pstack", "blast-radius", "bro", "correct", "recall", "teach",
+    "maintain-verification-skill",
+}
 
 errors = []
 
@@ -46,8 +50,10 @@ for p in sorted(ROOT.glob("skills/*/SKILL.md")):
         errors.append(f"{p}: description over 1536 chars (Claude Code truncates)")
     for k in set(d) - SKILL_KEYS:
         errors.append(f"{p}: unexpected key {k!r}")
-    if d.get("disable-model-invocation") and p.parent.name != "setup-pstack":
+    if d.get("disable-model-invocation") and p.parent.name not in KEEP_DISABLE_MODEL_INVOCATION:
         errors.append(f"{p}: disable-model-invocation blocks routing from poteto-mode")
+    if p.parent.name in KEEP_DISABLE_MODEL_INVOCATION and d.get("disable-model-invocation") is not True:
+        errors.append(f"{p}: explicit-only leaf must disable model invocation")
 
 for p in sorted(ROOT.glob("agents/*.md")):
     d = load(p)
@@ -57,6 +63,10 @@ for p in sorted(ROOT.glob("agents/*.md")):
         errors.append(f"{p}: agent name {d.get('name')!r} is not kebab-case")
     if not str(d.get("description", "")).strip():
         errors.append(f"{p}: missing description")
+    if not str(d.get("model") or "").strip() or d.get("model") in {"inherit", "inherit-parent", "auto"}:
+        errors.append(f"{p}: agent needs an explicit model (no inheritance aliases)")
+    if d.get("effort") not in {"low", "medium", "high", "xhigh", "max"}:
+        errors.append(f"{p}: agent needs explicit effort (low|medium|high|xhigh|max)")
     for k in set(d) - AGENT_KEYS:
         errors.append(f"{p}: unexpected key {k!r}")
 

@@ -11,7 +11,7 @@ Investigate the motivation and intent behind code.
 
 Companion to the `how` skill. `how` answers what the code does and how it works. `why` answers what forces led to its shape.
 
-Each spawn below names a role line in the `pstack-models.md` rule and a default. Set `model` to that line's value, or to the default if the rule or the line is missing. Leave `model` unset when the value is `auto` or `inherit-parent`. If the `Agent` tool rejects a slug, use the default and say so. If it rejects the default, use the closest valid slug of the same family from its error message.
+Resolve each seat's explicit `model` and `effort` from delegation-kit's live routing table when its `Delegation routing (live` section is in context; otherwise use `pstack-models.md` and the defaults below. Map `auto`, `inherit-parent`, and `inherit` to `model: sonnet`, `effort: medium`. Always pass both parameters to `Agent`, including retries and resumes. For fan-outs of 3+ use sonnet/haiku seats, never opus. The main session owns final synthesis; any separately prescribed synthesizer runs alone after the fan-out.
 
 ## Operating Posture
 
@@ -83,6 +83,7 @@ Launch all matching investigators in a single message so they run concurrently. 
 Subagent config (each):
 - `subagent_type`: `general-purpose`
 - `model`: the `why investigators` line, default `sonnet`
+- `effort`: explicitly pass the configured effort, default `medium`
 - tools: full (`general-purpose`, never `pstack:read-only` or `Explore`). Investigators need every MCP tool. Investigators still shouldn't write anything.
 
 Each investigator gets:
@@ -123,13 +124,7 @@ If your scope assessment suggests a single-commit trivial target where the PR de
 
 ## Step 4. Synthesize
 
-Spawn one synthesizer subagent:
-
-- `subagent_type`: `general-purpose`
-- `model`: the `why synthesizer` line, default `opus`
-- tools: full (`general-purpose`). The synthesizer's quality check spot-verifies citations, which can require MCP access.
-
-The synthesizer gets:
+The main session synthesizes after all investigators finish; do not spawn another synthesizer. Spot-verify citations using the available tools. Use:
 1. The investigator findings, including any null results and any categories skipped with justification
 2. The code anchor from Step 2 (file paths, symbols, commit hashes, PR numbers, ticket IDs)
 3. The user's original question

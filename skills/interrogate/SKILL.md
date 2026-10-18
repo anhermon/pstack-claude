@@ -36,15 +36,15 @@ Write one clear paragraph. If you're unsure about the intent, ask the user befor
 
 Launch all reviewers in a single message using the `Agent` tool. Use the `interrogate reviewers` line in `~/.claude/rules/pstack-models.md`, one reviewer per entry, extending or shrinking the Reviewer A/B/C labels below to the configured entry count. If the rule or that line is missing, use the table defaults.
 
-| Subagent | Default model |
+| Subagent | Default model / effort |
 |----------|---------------|
-| Reviewer A | `opus` |
-| Reviewer B | `haiku` |
-| Reviewer C | `sonnet` |
+| Reviewer A | `sonnet` / `medium` |
+| Reviewer B | `haiku` / `low` |
+| Reviewer C | `sonnet` / `medium` |
 
 For each reviewer:
 - `subagent_type`: `pstack:read-only`
-- `model`: the configured `interrogate reviewers` entry, or the table default with no configured line. For an `auto` or `inherit-parent` entry, omit `model` so that reviewer runs on the parent model.
+- `model` and `effort`: resolve each `interrogate reviewers` pair from the live delegation-kit table when present, otherwise the rule or table defaults. Pass both explicitly. Normalize `auto`, `inherit-parent`, and `inherit` to `sonnet/medium`. Fan-outs of 3+ use sonnet/haiku, never opus.
 - read-only: enforced by `pstack:read-only` (no Edit/Write); still say "do not modify files" in the prompt
 
 If the `Agent` tool rejects a configured entry, run that reviewer on the table default of its family and say so. Families are Claude (`opus`, `sonnet`, `haiku`, `fable`, `claude-*`), `codex`, and `gemini`; see pstack's `claude-code/runtime.md`. With no family match, use Reviewer A's default. If it rejects a table default, check the valid slugs in the `Agent` tool's error message, pick the closest equivalent (prefer the highest-reasoning tier of the same family), spawn with it, and open a separate PR to update the default table. Do not block the review on the slug issue. Never treat an alias entry as a rejected slug or apply either fallback to it.

@@ -29,21 +29,21 @@ For each candidate, read the first JSONL line and check that `message.content[0]
 
 ### 2. Spawn three reviewers in parallel
 
-One message, three `Agent` calls, `subagent_type: general-purpose`, with `model` set as below, full tool access (`general-purpose`, MCP included). Reviewers need MCP access for context lookups (tickets, chat threads, observability traces referenced in the transcript). Readonly strips MCPs.
+One message, three `Agent` calls, `subagent_type: general-purpose`, with explicit `model` and `effort` set as below, full tool access (`general-purpose`, MCP included). Reviewers need MCP access for context lookups (tickets, chat threads, observability traces referenced in the transcript). Readonly strips MCPs.
 
-Each reviewer and the synthesizer name a role line in the `pstack-models.md` rule and a default. Set `model` to that line's value, or to the default if the rule or the line is missing. Leave `model` unset when the value is `auto` or `inherit-parent`. If the `Agent` tool rejects a slug, use the default and say so. If it rejects the default, use the closest valid slug of the same family from its error message.
+Resolve each seat's explicit `model` and `effort` from delegation-kit's live routing table when its `Delegation routing (live` section is in context; otherwise use `pstack-models.md` and the defaults below. Map `auto`, `inherit-parent`, and `inherit` to `model: sonnet`, `effort: medium`. Always pass both parameters to `Agent`, including retries and resumes. For fan-outs of 3+ use sonnet/haiku seats, never opus. The main session owns final synthesis; any separately prescribed synthesizer runs alone after the fan-out.
 
-| Lens | Role line | Default `model` | Prompt template |
+| Lens | Role line | Default `model` / `effort` | Prompt template |
 |---|---|---|---|
-| Judgment | `reflect judgment, divergent, synthesizer` | `opus` | `references/judgment-reviewer.md` |
-| Tooling | `reflect tooling` | `sonnet` | `references/tooling-reviewer.md` |
-| Divergent | `reflect judgment, divergent, synthesizer` | `opus` | `references/divergent-reviewer.md` |
+| Judgment | `reflect judgment, divergent, synthesizer` | `sonnet` / `high` | `references/judgment-reviewer.md` |
+| Tooling | `reflect tooling` | `sonnet` / `medium` | `references/tooling-reviewer.md` |
+| Divergent | `reflect judgment, divergent, synthesizer` | `sonnet` / `high` | `references/divergent-reviewer.md` |
 
 Pass each template verbatim, substituting the transcript path or digest where marked. Reviewers return findings in the `Agent` response body.
 
 ### 3. Synthesize
 
-One `Agent` call, `subagent_type: general-purpose`, with `model` from the `reflect judgment, divergent, synthesizer` line (default `opus`), full tool access (`general-purpose`, MCP included). The synthesizer's quality check includes spot-verifying citations, which can require MCP access. Readonly strips MCPs. Use `references/synthesizer.md` verbatim, with each reviewer's full output inlined where marked. The synthesizer returns a structured Accepted / Rejected / Backlog list.
+One `Agent` call, `subagent_type: general-purpose`, with explicit `model` and `effort` from the `reflect judgment, divergent, synthesizer` line (single-seat default `opus` / `medium`, after all reviewers finish), full tool access (`general-purpose`, MCP included). The synthesizer's quality check includes spot-verifying citations, which can require MCP access. Readonly strips MCPs. Use `references/synthesizer.md` verbatim, with each reviewer's full output inlined where marked. The synthesizer returns a structured Accepted / Rejected / Backlog list.
 
 ### 4. Structural enforcement check
 

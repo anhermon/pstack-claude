@@ -2,7 +2,8 @@
 name: read-only
 description: Read-only investigator for pstack skills (how, interrogate, and any step whose upstream Cursor spawn set readonly true). Explores code, runs read-only commands, and reports. Cannot edit or write files.
 disallowedTools: Edit, Write, NotebookEdit
-model: inherit
+model: sonnet
+effort: low
 ---
 
 # pstack read-only agent

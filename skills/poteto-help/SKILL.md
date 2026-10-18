@@ -50,7 +50,7 @@ Whether `/poteto-mode` stays on depends on how the user starts it:
 - Claude Code has no Custom Modes. `/pstack:mode on` writes `.claude/pstack-mode`, and the plugin's hook then reminds every turn to apply `/poteto-mode` when a playbook matches. `/pstack:mode off` turns it off.
 - `claude --agent pstack:poteto-agent` runs a whole session as the poteto agent.
 
-Link [Claude Code's skills docs](https://code.claude.com/docs/en/skills) when this comes up. Mid-chat, "new task" makes the mode match a fresh playbook. `/poteto-mode` already uses `poteto-agent` for the subagents its playbook steps spawn. To get the same style from a subagent of your own, spawn it with `subagent_type: "pstack:poteto-agent"`.
+Link [Claude Code's skills docs](https://code.claude.com/docs/en/skills) when this comes up. Mid-chat, "new task" makes the mode match a fresh playbook. `/poteto-mode` already uses `poteto-agent` for the subagents its playbook steps spawn. To get the same style from a subagent of your own, spawn it with `subagent_type: "pstack:poteto-agent"`, explicit `model: sonnet` and `effort: medium` (or the resolved live role pair).
 
 ## Pick a skill
 
@@ -128,8 +128,8 @@ Principles are one-rule skills that `/poteto-mode` reads and cites in its replie
 | A question got treated as the next step of the last task | Say "new task", or say the turn doesn't need the mode. |
 | A new model choice had no effect | The rule from `/setup-pstack` loads at session start. Start a new session. |
 | Runs cost more than expected | See the cost paragraph under Get set up. |
-| A skill didn't load on its own | In Claude Code every pstack skill except `/setup-pstack` can load from the user's words, but Claude decides from each skill's description. Type the skill, or run `/poteto-mode`, to be sure. |
-| Parallel agents overwrote each other | Give each agent its own worktree, or spawn them with `isolation: "worktree"`. |
+| A skill didn't load on its own | Routed pstack skills can load from the user's words or the Skill tool. The explicit-only leaf skills are `setup-pstack`, `blast-radius`, `bro`, `correct`, `recall`, `teach`, and `maintain-verification-skill`. Type those directly. `/poteto-mode`, `/poteto-help`, and `/automate-me` remain auto-invocable.
+| Parallel agents overwrote each other | Give each agent its own worktree, or spawn them with `isolation: "worktree"`, explicit `model: sonnet` and `effort: medium` (or resolved role pairs; sonnet/haiku for fan-outs of 3+). |
 | An overnight run moved but finished nothing | `/loop` needs a check that can pass or fail, not a duration. See [guide page 7](../../docs/guide/07-overnight.md). |
 | The reply claims success from a green build | Ask for the real command, flow, stored value, or profile. That's the prove-it-works principle. |
 

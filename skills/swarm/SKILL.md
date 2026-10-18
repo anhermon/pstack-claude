@@ -23,12 +23,12 @@ Open a todolist with one entry per phase before launching anything.
 1. State the done predicate and the artifact or report the swarm must return.
 2. Choose the shape. Partition into slices, race N workers on identical briefs, or mix both. For a race or mixed shape, declare `first pass`, `rank all`, or `best-of` before spawning.
 3. Set N from the user or derive it from the shape. N is total workers, not the concurrent subagent limit.
-4. Pick the worker model from the `swarm workers` line in `~/.claude/rules/pstack-models.md`. If the rule or that line is missing, use `sonnet`. For `auto` or `inherit-parent`, omit `model` so the workers run on the parent model. If the `Agent` tool rejects a slug, use the default and say so. If it rejects the default, use the closest valid slug of the same family from its error message. For a model race, name each arm's model up front.
+4. Resolve the `swarm workers` model/effort pair from the live delegation-kit table when present, otherwise from `~/.claude/rules/pstack-models.md`; default `model: sonnet`, `effort: medium`. Map `auto`, `inherit-parent`, and `inherit` to that explicit pair. Fan-outs of 3+ use sonnet/haiku seats, never opus. Pass both fields on every call and retry. Name each race arm's pair up front.
 5. Give each worker its own writable output when it writes. When workers verify or measure commits, each brief names the exact SHAs. A measurement brief also names the method (sample count, what one sample is, order). The worker records both in its result.
 
 ## Phase B: Fan out
 
-Spawn all N workers in one message with `subagent_type: general-purpose`, `isolation: "worktree"`, `run_in_background: true`, and the step 4 model, left unset for `auto` or `inherit-parent`. Omit `isolation` only when the worker must share the parent's checkout.
+Spawn all N workers in one message with `subagent_type: general-purpose`, `isolation: "worktree"`, `run_in_background: true`, and explicit `model` plus `effort` from step 4. Omit `isolation` only when the worker must share the parent's checkout.
 
 When a worker must start from a non-default pushed branch, tell it to fetch and check out that branch inside its worktree.
 

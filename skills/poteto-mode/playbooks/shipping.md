@@ -1,5 +1,7 @@
 ### Shipping
 
+> **Agent parameters:** every spawn, retry, resume, and nested delegate passes explicit `model` and `effort`. Resolve delegation-kit's live role table first, otherwise pstack's role pair: code `sonnet/medium`, exploration/low-risk `sonnet/low`. Inheritance aliases pin `sonnet/medium`. Fan-outs of 3+ use sonnet/haiku, never opus. The main session synthesizes; only a single judge after the fan-out may use `opus/medium`.
+
 **You own what lands. Verify each PR independently, land only the verified run from the root, then keep your hands off the queue.**
 
 This is the half after `playbooks/babysit.md`.

@@ -1,5 +1,7 @@
 ### Orchestrate
 
+> **Agent parameters:** every spawn, retry, resume, and nested delegate passes explicit `model` and `effort`. Resolve delegation-kit's live role table first, otherwise pstack's role pair: code `sonnet/medium`, exploration/low-risk `sonnet/low`. Inheritance aliases pin `sonnet/medium`. Fan-outs of 3+ use sonnet/haiku, never opus. The main session synthesizes; only a single judge after the fan-out may use `opus/medium`.
+
 **You own the program, never the code. Author briefs, drain the queue, keep the frontier green, decide.** For a whole project handed to one standing coordinator chat: multi-day, many stacked PRs, dozens to hundreds of subagents, the human checking in twice a day instead of every five minutes. One task driven to a predicate is Autonomous run. One ambitious run needing a bespoke workflow is figure-it-out. Route here when the work outlives any single agent. Work one agent could finish inside the session's budget is not a program.
 
 Ceremony must scale with the program. On cheap near-identical units, collapse it as each section directs.
@@ -7,7 +9,7 @@ Ceremony must scale with the program. On cheap near-identical units, collapse it
 Three rules carry the rest.
 
 - Completions are queue events, not interrupts.
-- Every spawn and every resume carries the standing orders verbatim.
+- Every spawn and resume passes explicit `model` and `effort` and carries the standing orders verbatim. Resolve each role from delegation-kit's live table when present, otherwise the pstack rule; default workers/sub-coordinators to `sonnet/medium`, low-risk verifiers/explorers to `sonnet/low`. Map inheritance aliases to `sonnet/medium`. Fan-outs of 3+ use sonnet/haiku, never opus. The main session synthesizes; a separate single judge may use `opus/medium` only after the wave finishes.
 - The brief is the product. A vague brief fails quietly, because a worker cannot ask you a question.
 
 #### Roles and placement
